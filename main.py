@@ -54,9 +54,7 @@ class cpuPaddle(Paddle):
         self.rect.centery += self.speed * self.dir
         self.rect.clamp_ip(self.master.display_rect)
         self.frame_counter += 1
-        if self.frame_counter > FPS:
-            self.frame_counter = 0
-
+        self.frame_counter = self.frame_counter % FPS
 
 class Ball(pg.sprite.Sprite):
 
@@ -74,6 +72,7 @@ class Ball(pg.sprite.Sprite):
         self.y_speed = BALL_Y_SPEED
     
     def check_collision(self):
+        # TODO: Make collision less stupid.
         if self.rect.bottom >= HEIGHT or self.rect.top <= 0:
             self.y_dir *= -1
         if any(pg.sprite.spritecollide(self, self.master.paddles, False)):
@@ -191,7 +190,7 @@ class Game:
         prompt1 = self.small_font.render('Press spacebar to start again', False, TEXT)
         prompt2 = self.small_font.render('or escape to exit', False, TEXT)
         while True:
-            self.display.fill(bg)
+            self.display.fill(BG)
             self.display.blit(victory_msg, (25, 125))
             self.display.blit(prompt1, (15, 425))
             self.display.blit(prompt2, (125, 450))
