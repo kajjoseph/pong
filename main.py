@@ -53,8 +53,8 @@ class cpuPaddle(Paddle):
                 self.dir = 1
         self.rect.centery += self.speed * self.dir
         self.rect.clamp_ip(self.master.display_rect)
-        self.frame_counter += 1
-        self.frame_counter = self.frame_counter % FPS
+        self.frame_counter = (self.frame_counter + 1) % FPS
+        #self.frame_counter = self.frame_counter % FPS
 
 class Ball(pg.sprite.Sprite):
 
@@ -75,14 +75,13 @@ class Ball(pg.sprite.Sprite):
         # TODO: Make collision less stupid.
         if self.rect.bottom >= HEIGHT or self.rect.top <= 0:
             self.y_dir *= -1
+            if self.y_speed < BALL_MAX_SPEED:
+                self.y_speed += 1
         if any(pg.sprite.spritecollide(self, self.master.paddles, False)):
             self.x_dir *= -1
-            if rng.choice([True, False]):
-                self.y_dir *= -1
-                if self.y_speed < BALL_MAX_SPEED:
-                    self.y_speed += 1
             if self.x_speed < BALL_MAX_SPEED:
                 self.x_speed += 1
+            
     
     def scored(self):
         if self.master.player1.score >= 5 or self.master.player2.score >= 5:
