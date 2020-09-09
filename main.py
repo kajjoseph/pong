@@ -6,14 +6,21 @@ from pygame.locals import *
 
 pg.init()
 
-multi_player = False
+
+
+# 'human' for player control or 'cpu' for CPU control
+player1 = 'cpu'
+player2 = 'cpu'
 
 BG = BLACK
 FG = GREEN
-TEXT = BLUE
+TXT_COLOR = BLUE
 
 
 class Paddle(pg.sprite.Sprite):
+    '''
+    Class for storing and representing player controlled paddle
+    '''
     
     def __init__(self, master, x, y, up, down):
         self.master = master
@@ -32,19 +39,27 @@ class Paddle(pg.sprite.Sprite):
     def update(self, input):
         if input[self.up]:
             self.rect.centery -= self.speed
-        if input[self.down]:
+            self.dir = -1
+        elif input[self.down]:
             self.rect.centery += self.speed
+            self.dir = 1
+        else:
+            self.dir = 0
         self.rect.clamp_ip(self.master.display_rect)
 
 
 class cpuPaddle(Paddle):
-
+    '''
+    Class for storing and representing CPU controlled paddle
+    '''
     def __init__(self, master, x, y):
         Paddle.__init__(self, master, x, y, None, None)
         self.speed = CPU_PADDLE_SPEED
         self.frame_counter = 0
+        self.check_rate = BALL_CHECK_INTERVAL
 
     def update(self, input):
+        # Add more intelligent ball detection
         ball = self.master.ball
         if self.frame_counter % BALL_CHECK_INTERVAL == 0:
             if ball.rect.bottom < self.rect.top:
@@ -54,7 +69,6 @@ class cpuPaddle(Paddle):
         self.rect.centery += self.speed * self.dir
         self.rect.clamp_ip(self.master.display_rect)
         self.frame_counter = (self.frame_counter + 1) % FPS
-        #self.frame_counter = self.frame_counter % FPS
 
 class Ball(pg.sprite.Sprite):
 
@@ -72,16 +86,20 @@ class Ball(pg.sprite.Sprite):
         self.y_speed = BALL_Y_SPEED
     
     def check_collision(self):
-        # TODO: Make collision less stupid.
+        # TODO: Stop ball getting stuck in paddle when hit by top or bottom of paddle
         if self.rect.bottom >= HEIGHT or self.rect.top <= 0:
             self.y_dir *= -1
             if self.y_speed < BALL_MAX_SPEED:
                 self.y_speed += 1
-        if any(pg.sprite.spritecollide(self, self.master.paddles, False)):
+        hits = pg.sprite.spritecollide(self, self.master.paddles, False)
+        if any(hits):
+            print(hits)
             self.x_dir *= -1
             if self.x_speed < BALL_MAX_SPEED:
                 self.x_speed += 1
-            
+        if hits:
+            if hits[0].dir != self.y_dir:
+                self.y_dir *= -1
     
     def scored(self):
         if self.master.player1.score >= 5 or self.master.player2.score >= 5:
@@ -108,10 +126,13 @@ class Game:
         self.display_rect = self.display.get_rect()
         self.paddles = pg.sprite.Group()
         self.all_sprites = pg.sprite.Group()
-        self.player1 = Paddle(self, PLAYER1_X, PLAYER1_Y, K_w, K_s)
-        if multi_player:
+        if player1 == 'human':
+            self.player1 = Paddle(self, PLAYER1_X, PLAYER1_Y, K_w, K_s)
+        elif player2 == 'cpu':
+            self.player1 = cpuPaddle(self, PLAYER1_X, PLAYER1_Y)
+        if player2 == 'human':
             self.player2 = Paddle(self, PLAYER2_X, PLAYER2_Y, K_UP, K_DOWN)
-        else:
+        elif player2 == 'cpu':
             self.player2 = cpuPaddle(self, PLAYER2_X, PLAYER2_Y)
         self.ball = Ball(self)
         self.large_font = pg.font.SysFont(*LARGE_FONT)
@@ -143,8 +164,8 @@ class Game:
             keys = pg.key.get_pressed()
             self.all_sprites.update(keys)
             self.all_sprites.draw(self.display)
-            p1_score = self.large_font.render(f'{self.player1.score}', False, TEXT)
-            p2_score = self.large_font.render(f'{self.player2.score}', False, TEXT)
+            p1_score = self.large_font.render(f'{self.player1.score}', False, TXT_COLOR)
+            p2_score = self.large_font.render(f'{self.player2.score}', False, TXT_COLOR)
             self.display.blit(p1_score, (100, 100))
             self.display.blit(p2_score, (WIDTH-100-p2_score.get_width(), 100))
             for event in pg.event.get():
@@ -185,9 +206,9 @@ class Game:
 
     def game_over_screen(self):
         winner = 'Player 1' if self.player1.score > self.player2.score else 'Player 2'
-        victory_msg = self.large_font.render(f'{winner} wins!', False, TEXT)
-        prompt1 = self.small_font.render('Press spacebar to start again', False, TEXT)
-        prompt2 = self.small_font.render('or escape to exit', False, TEXT)
+        victory_msg = self.large_font.render(f'{winner} wins!', False, TXT_COLOR)
+        prompt1 = self.small_font.render('Press spacebar to start again', False, TXT_COLOR)
+        prompt2 = self.small_font.render('or escape to exit', False, TXT_COLOR)
         while True:
             self.display.fill(BG)
             self.display.blit(victory_msg, (25, 125))
