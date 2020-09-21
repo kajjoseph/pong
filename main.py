@@ -21,7 +21,6 @@ class Paddle(pg.sprite.Sprite):
     '''
     Class for storing and representing player controlled paddle
     '''
-    
     def __init__(self, master, x, y, up, down):
         self.master = master
         self.lists = master.all_sprites, master.paddles
@@ -92,7 +91,7 @@ class Ball(pg.sprite.Sprite):
             if self.y_speed < BALL_MAX_SPEED:
                 self.y_speed += 1
         hits = pg.sprite.spritecollide(self, self.master.paddles, False)
-        if any(hits):
+        if hits:
             print(hits)
             self.x_dir *= -1
             if self.x_speed < BALL_MAX_SPEED:
@@ -128,7 +127,7 @@ class Game:
         self.all_sprites = pg.sprite.Group()
         if player1 == 'human':
             self.player1 = Paddle(self, PLAYER1_X, PLAYER1_Y, K_w, K_s)
-        elif player2 == 'cpu':
+        elif player1 == 'cpu':
             self.player1 = cpuPaddle(self, PLAYER1_X, PLAYER1_Y)
         if player2 == 'human':
             self.player2 = Paddle(self, PLAYER2_X, PLAYER2_Y, K_UP, K_DOWN)
